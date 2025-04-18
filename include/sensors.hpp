@@ -1,7 +1,15 @@
-struct Vector3 {
-    float x, y, z;
+#pragma once
+
+struct GyroData {
+    float gyroX, gyroY, gyroZ;
+    float acclX, acclY, acclZ;
+    float temperature;
+  };
+
+struct MagData {
+    float magX, magY, magZ;
   };
   
 void initSensors();
-Vector3 readGyro();  
-Vector3 readMagnetometer();
+GyroData readGyro();  
+MagData readMagnetometer();
