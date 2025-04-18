@@ -11,5 +11,6 @@ struct MagData {
   };
   
 void initSensors();
+void calibrateSensors();
 GyroData readGyro();  
 MagData readMagnetometer();

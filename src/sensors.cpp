@@ -10,36 +10,50 @@ QMC5883LCompass compass;
 void initSensors() {
     Wire.begin(); 
 
-    // MPU6050 Init
+    // Gyro (MPU6050) Init
     gyro.initialize();
     if (!gyro.testConnection()) {
         Serial.println("MPU6050 connection failed!");
     } else {
-        Serial.println("MPU6050 connected.");
+        Serial.println("MPU6050 initialized.");
     }
 
-    // QMC5883LCompass Init
+    // Magnetometer (QMC5883L) Init
     compass.init();
-    compass.setCalibration(-1227, 328, -2994, 546, -1500, 600); // Werte ggf. anpassen
     Serial.println("QMC5883L initialized.");
+
+}
+
+void calibrateSensors() {
+    // Gyro calibration
+    Serial.println("\n[!] Do not move sensor - calibrating Gyro...");
+    delay(2000); // Wait for 2 seconds
+    gyro.CalibrateGyro(6); // Calibrate gyro
+    gyro.CalibrateAccel(6); // Calibrate accelerometer
+    Serial.println("\n[!] Gyro calibration complete.");
+
+    // Magnetometer calibration
+    Serial.println("\n[!] Move sensor in a figure 8 pattern - calibrating Magnetometer...");
+    compass.calibrate(); // Calibrate magnetometer
+    Serial.println("\n[!] Magnetometer calibration complete.");
 }
 
 GyroData readGyro(){
     GyroData data;
 
-    // Gyro data (raw, convert to deg/s if nötig)
+    // Gyro data (raw)
     int16_t gx, gy, gz;
 
-    // Accelerometer data (raw, convert to g if nötig)
+    // Accelerometer data (raw)
     int16_t ax, ay, az;
 
-    // Temperature data (raw, convert to °C if nötig)
+    // Temperature data (raw)
     int16_t temp;
 
     gyro.getRotation(&gx, &gy, &gz);
-    data.gyroX = gx / 131.0;
-    data.gyroY = gy / 131.0;
-    data.gyroZ = gz / 131.0;
+    data.gyroX = gx / 131.0; // 131 LSB/(°/s)
+    data.gyroY = gy / 131.0; // 131 LSB/(°/s)  
+    data.gyroZ = gz / 131.0; // 131 LSB/(°/s)
 
     gyro.getAcceleration(&ax, &ay, &az);
     data.acclX = ax / 16384.0; // 16384 LSB/g
@@ -56,9 +70,11 @@ MagData readMagnetometer(){
 
     compass.read();
 
-    data.magX = compass.getX();
-    data.magY = compass.getY();
-    data.magZ = compass.getZ();
+    float scale =  (8.0 / 32767.0) * 100.0; // G/LSB * 100
+
+    data.magX = compass.getX() * scale; // µT
+    data.magY = compass.getY() * scale; // µT
+    data.magZ = compass.getZ() * scale; // µT
    
     return data;
 }
