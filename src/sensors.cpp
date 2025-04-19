@@ -20,6 +20,7 @@ void initSensors() {
 
     // Magnetometer (QMC5883L) Init
     compass.init();
+    compass.setMode(0x01,0x0C,0x10,0X00); // Set mode, ODR, RNG, OSR
     Serial.println("QMC5883L initialized.");
 
 }
@@ -35,6 +36,7 @@ void calibrateSensors() {
     // Magnetometer calibration
     Serial.println("\n[!] Move sensor in a figure 8 pattern - calibrating Magnetometer...");
     compass.calibrate(); // Calibrate magnetometer
+    compass.setMagneticDeclination(3, 10); // Set magnetic declination (degrees, minutes) Bonn: +3° 10'
     Serial.println("\n[!] Magnetometer calibration complete.");
 }
 
@@ -75,6 +77,8 @@ MagData readMagnetometer(){
     data.magX = compass.getX() * scale; // µT
     data.magY = compass.getY() * scale; // µT
     data.magZ = compass.getZ() * scale; // µT
+
+    data.azimuth = compass.getAzimuth(); // degrees
    
     return data;
 }

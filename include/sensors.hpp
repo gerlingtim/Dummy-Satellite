@@ -8,6 +8,7 @@ struct GyroData {
 
 struct MagData {
     float magX, magY, magZ;
+    float azimuth;
   };
   
 void initSensors();

@@ -28,6 +28,7 @@ void loop() {
   Serial.print("mX: "); Serial.print(magData.magX, 4);
   Serial.print(" mY: "); Serial.print(magData.magY, 4);
   Serial.print(" mZ: "); Serial.println(magData.magZ, 4);
+  Serial.print("Azimuth: "); Serial.println(magData.azimuth, 4);
 //
   delay(2000); // Delay for readability
 }
