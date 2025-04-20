@@ -35,7 +35,11 @@ void calibrateSensors() {
 
     // Magnetometer calibration
     Serial.println("\n[!] Move sensor in a figure 8 pattern - calibrating Magnetometer...");
-    compass.calibrate(); // Calibrate magnetometer
+    //compass.calibrate(); // Calibrate magnetometer
+    
+    // Alternative: set calibration values manually
+    compass.setCalibrationOffsets(-891.0, -710.0, -272.0); // Set offsets (x, y, z)
+    compass.setCalibrationScales(1.1, 0.83, 1.13); // Set scale factors (x, y, z)
     compass.setMagneticDeclination(3, 10); // Set magnetic declination (degrees, minutes) Bonn: +3° 10'
     Serial.println("\n[!] Magnetometer calibration complete.");
 }
@@ -49,18 +53,15 @@ GyroData readGyro(){
     // Accelerometer data (raw)
     int16_t ax, ay, az;
 
-    // Temperature data (raw)
-    int16_t temp;
-
     gyro.getRotation(&gx, &gy, &gz);
     data.gyroX = gx / 131.0; // 131 LSB/(°/s)
     data.gyroY = gy / 131.0; // 131 LSB/(°/s)  
     data.gyroZ = gz / 131.0; // 131 LSB/(°/s)
 
     gyro.getAcceleration(&ax, &ay, &az);
-    data.acclX = ax / 16384.0; // 16384 LSB/g
-    data.acclY = ay / 16384.0; // 16384 LSB/g
-    data.acclZ = az / 16384.0; // 16384 LSB/g
+    data.acclX = ax; 
+    data.acclY = ay; 
+    data.acclZ = az; 
 
     data.temperature = gyro.getTemperature() / 340.0 + 36.53; // °C
 
