@@ -1,14 +1,25 @@
 #include <Wire.h>
 #include <MPU6050.h>
 #include <QMC5883LCompass.h>
+
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 #include "sensors.hpp"
+
+#define ONE_WIRE_BUS 4
 
 MPU6050 gyro;
 QMC5883LCompass compass;
 
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature tempSensor(&oneWire);
+
 
 void initSensors() {
     Wire.begin(); 
+
+    tempSensor.begin(); // Initialize temperature sensor
 
     // Gyro (MPU6050) Init
     gyro.initialize();
@@ -63,7 +74,7 @@ GyroData readGyro(){
     data.acclY = ay; 
     data.acclZ = az; 
 
-    data.temperature = gyro.getTemperature() / 340.0 + 36.53; // °C
+    data.temperature = gyro.getTemperature() / 340.0 + 35.53; // °C
 
     return data;
 }
@@ -82,4 +93,9 @@ MagData readMagnetometer(){
     data.azimuth = compass.getAzimuth(); // degrees
    
     return data;
+}
+
+float readTemperatureSensor() {
+    tempSensor.requestTemperatures(); // Request temperature conversion
+    return tempSensor.getTempCByIndex(0); // Get temperature in Celsius
 }

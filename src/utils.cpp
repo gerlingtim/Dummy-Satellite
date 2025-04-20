@@ -1,6 +1,6 @@
 #include "utils.hpp"
 
-const int BUFFER_SIZE = 5;
+const int BUFFER_SIZE = 3;
 float tempBuffer[BUFFER_SIZE];
 int bufferIndex = 0;
 

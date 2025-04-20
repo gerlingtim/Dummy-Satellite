@@ -15,3 +15,4 @@ void initSensors();
 void calibrateSensors();
 GyroData readGyro();  
 MagData readMagnetometer();
+float readTemperatureSensor();
