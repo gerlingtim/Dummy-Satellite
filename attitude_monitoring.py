@@ -9,16 +9,23 @@ class AttitudeMonitor:
     def __init__(self, port='COM4', baudrate=9600, timeout=1):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
         self.timestamp_old = None
+
         self.gyro_roll = 0.0
         self.gyro_pitch = 0.0
-        self.gyro_yaw = 0.0
+        self.gyro_yaw = 90.0 # Synchronize with compass yaw
+
+        self.acc_x = None
+        self.acc_y = None
+        self.acc_z = None
+        self.alpha = 0.5
+
         self.fig = None
         self.ax = None
         self.collection = None
 
         # For Kalman filter
         self.P = np.eye(3) * 0.1 # Initial covariance matrix 
-        self.Q = np.eye(3) * 0.01 # Process noise covariance
+        self.Q = np.eye(3) * 0.001 # Process noise covariance
         self.R = np.eye(3) * 0.1 # Measurement noise covariance (for roll, pitch, yaw)
 
     def read_serial_data(self):
@@ -73,14 +80,20 @@ class AttitudeMonitor:
 
     def acc_to_roll_pitch(self, gyro_a):
         # Convert accelerometer data to roll, pitch, yaw
-        ax, ay, az = gyro_a[0] * 9.81, gyro_a[1] * 9.81, gyro_a[2]
-        roll = np.arctan2(ay, az)  
-        pitch = -np.arctan2(ax, np.sqrt(ay**2 + az**2))
+        self.acc_x = gyro_a[0] * 9.81
+        self.acc_y = gyro_a[1] * 9.81
+        self.acc_z = gyro_a[2]
 
-        return roll, pitch
+        roll = np.arctan2(self.acc_y, self.acc_z)  
+        pitch = -np.arctan2(self.acc_x, np.sqrt(self.acc_y**2 + self.acc_z**2))
+
+        return np.rad2deg(roll), np.rad2deg(pitch)
     
     def mag_to_yaw(self, compass_m, roll, pitch):
         mx, my, mz = compass_m[0], compass_m[1], compass_m[2]
+
+        roll = np.deg2rad(roll)
+        pitch = np.deg2rad(pitch)
 
         sin_r = np.sin(roll)
         cos_r = np.cos(roll)
@@ -91,7 +104,7 @@ class AttitudeMonitor:
         my2 = mx * sin_r * sin_p + my * cos_r - mz * sin_r * cos_p
 
         yaw = np.arctan2(-my2, mx2)
-        return yaw
+        return np.rad2deg(yaw)
     
     def gyro_to_roll_pitch_yaw(self, gyro_g, dt):
         # Convert gyroscope data to roll, pitch, yaw
@@ -112,15 +125,18 @@ class AttitudeMonitor:
             if self.timestamp_old is not None:
                 dt = time_ms - self.timestamp_old
             else:
-                dt = 100  # Default to 100 ms if no previous timestamp
+                dt = 50  # Default to 100 ms if no previous timestamp
             
             self.gyro_to_roll_pitch_yaw(gyro_g, dt)
             roll_g, pitch_g, yaw_g = self.gyro_roll, self.gyro_pitch, self.gyro_yaw
             
             roll_a, pitch_a = self.acc_to_roll_pitch(gyro_a)
-            yaw_m = self.mag_to_yaw(compass_m, roll_a, pitch_a)
+            yaw_m = self.mag_to_yaw(compass_m, self.gyro_roll, self.gyro_pitch)
             
             z = np.array([roll_a, pitch_a, yaw_m])
+
+            print(f"z: {z}")
+
             rpy = np.array([roll_g, pitch_g, yaw_g])
 
             y = z - rpy
@@ -136,6 +152,7 @@ class AttitudeMonitor:
             self.P = np.dot(np.eye(3) - K, self.P)  # Update covariance matrix
 
             self.ax.set_title(f"Roll_g: {roll_corr:.1f}° | Pitch_g: {pitch_corr:.1f}°| Yaw_g: {yaw_corr:.1f}°")
+            self.gyro_roll, self.gyro_pitch, self.gyro_yaw = roll_corr, pitch_corr, yaw_corr
                 
             rotated_faces = self.rotate(self.create_box(), corrected_rpy)
             self.collection.set_verts(rotated_faces)
@@ -159,7 +176,7 @@ class AttitudeMonitor:
         self.ax.set_xlabel("X")
         self.ax.set_ylabel("Y")
         self.ax.set_zlabel("Z")
-        self.ax.view_init(elev=20, azim=60)
+        self.ax.view_init(elev=20, azim=10)
 
         colors = ['red', 'green', 'blue', 'yellow', 'orange', 'cyan']
         faces = self.create_box()
@@ -170,7 +187,7 @@ class AttitudeMonitor:
         print("Waiting for data...")
         self.initialize_plot()
         try:
-            ani = animation.FuncAnimation(self.fig, self.update_plot, frames=np.arange(0, 360, 1), interval=100, repeat=True)
+            ani = animation.FuncAnimation(self.fig, self.update_plot, frames=np.arange(0, 360, 1), interval=50, repeat=True)
             plt.show()
         finally:
             self.ser.close()
