@@ -35,6 +35,12 @@ Dummy Satellite/ \
 
 ---
 
+## Wiring diagram
+
+TODO
+
+---
+
 ## Getting Started
 
 ### Prerequisites
