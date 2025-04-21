@@ -1,10 +1,3 @@
-#include <Wire.h>
-#include <MPU6050.h>
-#include <QMC5883LCompass.h>
-
-#include <OneWire.h>
-#include <DallasTemperature.h>
-
 #include "sensors.hpp"
 
 #define ONE_WIRE_BUS 4

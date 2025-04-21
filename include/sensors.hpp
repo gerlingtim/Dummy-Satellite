@@ -1,5 +1,12 @@
 #pragma once
 
+#include <Wire.h>
+#include <MPU6050.h>
+#include <QMC5883LCompass.h>
+
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 struct GyroData {
     float gyroX, gyroY, gyroZ;
     float acclX, acclY, acclZ;

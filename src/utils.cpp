@@ -14,13 +14,3 @@ float getSmoothedTemperature(float newTemp) {
     }
     return sum / BUFFER_SIZE;
   }
-
-void printCSVWithTimestamp(float* values, size_t size){
-  Serial.print(millis()); // Print timestamp
-  Serial.print(",");
-  for (size_t i = 0; i < size; ++i) {
-    Serial.print(values[i], 3);
-    if (i < size - 1) Serial.print(",");
-  }
-  Serial.println();
-}

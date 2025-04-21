@@ -1,7 +1,10 @@
 #include <Arduino.h>
+
 #include <DallasTemperature.h>
+
 #include "sensors.hpp"
 #include "utils.hpp"
+#include "communication.hpp"
 
 #define LED_PIN_GYRO 8
 #define LED_PIN_TEMP 2
@@ -11,6 +14,7 @@
 bool ledStateGyro = false; // LED state
 bool ledStateTemp = false; // LED state
 
+
 void setup()
 {
   Serial.begin(9600);
@@ -19,6 +23,9 @@ void setup()
 
   initSensors();      // Initialize sensors
   calibrateSensors(); // Calibrate sensors
+
+  // Initialize CAN bus
+  initCANBus();
 }
 
 void loop()
@@ -30,7 +37,6 @@ void loop()
 
   if (temperature != DEVICE_DISCONNECTED_C)
   {
-    //float smoothedTemp = getSmoothedTemperature(temperature);
     // Check if Temperature is overheating
     if (!ledStateTemp && temperature > TEMP_THRESHOLD_HIGH)
     {
@@ -70,5 +76,24 @@ void loop()
       magData.azimuth,
       temperature};
   // printCSVWithTimestamp(transmissionData, 11); // Print data with timestamp
-  delay(50); // Delay for readability
+
+  // Send data via CAN bus
+  
+  //Gyro Data
+  sendFloatVectorAsInt16(0x100, gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ);
+
+  // Acc
+  sendFloatVectorAsInt16(0x101, gyroData.acclX, gyroData.acclY, gyroData.acclZ);
+
+  // Magnetometer
+  sendFloatVectorAsInt16(0x102, magData.magX, magData.magY, magData.magZ);
+
+  // Temperatur (Gyro + extern)
+  sendSingleFloatAsInt16(0x103, gyroData.temperature);
+  sendSingleFloatAsInt16(0x104, temperature);
+
+  // Azimut
+  sendSingleFloatAsInt16(0x105, magData.azimuth);
+
+  delay(500); // Delay for readability
 }
